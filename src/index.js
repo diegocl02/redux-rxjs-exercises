@@ -1,31 +1,32 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-import App from "./App";
+import PreparedApp from "./App";
 import registerServiceWorker from "./registerServiceWorker";
 import { applyMiddleware, createStore } from "redux";
 import { reducer } from "./redux/reducer";
-import * as Actions from "./redux/actions";
 import { createEmptyAppState } from "./redux/create-empty";
-import { bindObservableAsProps } from "./redux/bind";
-import { Observable } from "rxjs";
+import { createEpicMiddleware, combineEpics } from "redux-observable";
+import * as epics from "./redux/epics";
 
-const store = createStore(reducer, createEmptyAppState());
+import {Provider} from  'react-redux';
 
-function appStateToProps(state) {
-  return {
-    putRowFirst: rowId => store.dispatch(Actions.putRowFirst(rowId)),
-    ...state
-  };
-}
+const rootEpic = combineEpics(...epics);
+const epicMiddleware = createEpicMiddleware();
 
-const PreparedApp = bindObservableAsProps(
-  // $FlowFixMe: Teach flow about Symbol.observable
-  Observable.from(store)
-    .distinctUntilChanged()
-    .map(state => appStateToProps(state)),
-  App
-);
+const getStore = () => {
+  const store = createStore(
+    reducer,
+    createEmptyAppState(),
+    applyMiddleware(epicMiddleware)
+  );
 
-ReactDOM.render(<PreparedApp />, document.getElementById("root"));
+  epicMiddleware.run(rootEpic);
+
+  return store;
+};
+
+const store = getStore()
+
+ReactDOM.render(<Provider store={store}><PreparedApp /></Provider>, document.getElementById("root"));
 registerServiceWorker();
