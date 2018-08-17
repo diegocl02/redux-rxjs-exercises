@@ -8,10 +8,11 @@ import { reducer } from "./redux/reducer";
 import { createEmptyAppState } from "./redux/create-empty";
 import { createEpicMiddleware, combineEpics } from "redux-observable";
 import * as epics from "./redux/epics";
+import 'rxjs';
 
 import {Provider} from  'react-redux';
 
-const rootEpic = combineEpics(...epics);
+// const rootEpic = combineEpics(epics.saveField);
 const epicMiddleware = createEpicMiddleware();
 
 const getStore = () => {
@@ -21,7 +22,7 @@ const getStore = () => {
     applyMiddleware(epicMiddleware)
   );
 
-  epicMiddleware.run(rootEpic);
+  epicMiddleware.run(epics.saveField)
 
   return store;
 };
